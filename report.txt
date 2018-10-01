@@ -1,0 +1,154 @@
+1)
+
+No known bugs
+
+2)
+
+--- MyHash ---
+
+associate()
+Structure consisted of a dynamically allocated (resizable) array of Pair object pointers. The Pair object can hold a key, a value, and a pointer to another Pair object. Thus whenever a collision occurs after hashing the key to an index in the array, another Pair is created and connected to the previous Pair in that bucket. A counter increments every time a Pair is created
+
+Resizing the array consisted of:
+Check current load factor > max load factor
+    Make copy of current hash table
+    delete current hash table pointers
+    allocate new hash table with twice size
+    rehash old data from copy to new hash table
+	associate(copy key, copy value)
+    delete copy hash table
+
+find()
+Input key was put through hash function and pointer to value associated with that key was returned if it existed. This searched down linked Pairs
+
+reset()
+Standard deletion of pointers and what they point to. Also resets counters. Is called in destructor
+
+--- Tokenizer ---
+
+tokenize()
+loop input word
+    Flag any chars that match a separator
+    add non-separators to a buffer string
+    If buffer not empty or reaching end of input
+	add separated word to return
+    reset buffer and flag
+return vector
+
+--- WordList ---
+
+This class had 2 hash tables, for storing by word and storing by letter pattern, allowing words to be looked up quickly using either as the key.
+
+loadWordList()
+delete contents of old hash tables
+attempt to open word list file
+    return false if can't
+while getline in file		// returns false at end
+    for each char in line
+	If not only letter/apostrophe
+	    move to the next line
+	    clear current string buffer
+    make all letters lowercase for case insensitivity functions
+    associate by word
+    
+    create letter pattern and a buffer vector
+    if a vector already exists in pattern hash table
+        copy it to buffer
+    add actual word to buffer
+    associate by letter pattern, replacing old vector with new if needed
+return true
+
+contains()
+make input word lower case
+attempt to find word in relevant hash table
+    if can't return false
+make returned value lower case
+return value == input word
+
+findCandidate()
+Validate equal size
+loop through both at once
+    check all letters/apostrophes in cipherWord, all letters/apostrophe/question mark in currTranslation
+        If not return empty vector
+    Make all letters in both lowercase
+
+attempt to find cipher by letter pattern -> candidates
+    if cant, return empty
+
+loop candidates
+    loop currtranslation
+	check if known letters in currtranslation match with the candidate
+            if true then can add it to vector
+return accepted candidates
+
+letterPattern()
+if input empty return
+Make counter and buffer string
+for loop starting at counter, which is 0, until end of word
+    loop through previously indexed chars (j=0; j<i; j++)
+        if matching char
+	    add to pattern as number it was indexed as
+    if does not match any previous char
+        counter++
+	add to pattern as new number
+return pattern
+
+--- Translator ---
+
+Uses unorder_map and a vector of unordered_maps as a stack
+
+pushMapping()
+Check cipher and plain are equal size and all alpha
+loop through both
+    if apostrophe, continue
+    loop through current translation map
+	Ensure case of all value matches translation map case (A->a)
+	Check if a cioher char matches a key which already has a value OR a value in translation map matches char in plain
+	    If so return false
+	Exception: if both key and value match cipher and plain, continue
+
+loop through both
+    ignore apostrophe
+    add key-value pair to map
+push changed map onto stack
+increment push counter
+return true
+
+popMapping()
+if (pushCounter > 0)
+    pop map off stack
+    currMap = map now on top of stack
+    decrement pushCount
+    return true
+return false
+
+getTranslation()
+make string translation
+loop cipher
+    if can find ciphertext letter in translation mapping
+	add translated char to translation, keeping original case
+    else if cipher is letter
+	add '?' to translation
+    else
+	add cipher to translation
+return translation
+
+--- Decrypter ---
+
+Uses Wordlist, Translator, Tokenizer
+
+crack()
+make vector decryptions
+make vector tokens
+if input ciphertext empty, return
+crackHelper(decryptions, tokens, ciphertext, 0)
+sort decryptions
+return decryptions
+
+crackHelper()    (Steps 2-6)
+This functions takes reference to decryptions, tokens, ciphertext, and a number as the index of the chosen word to decrypt (tokens may not have needed to be passed, i didnt bother checking im done with this). Follows algorithm from spec. Uses flags in step 6 keeping track of the three possibilities of tokens being all fully translated, valid words but not fully translated, and invalid word. By the end of the function, tokens holds ciphertext words as translated as possible.
+
+The function attempts decryptions of ciphertext words in the order they show up in ciphertext. Index is incremented on each recursive call, but no check/stop exists for reaching an out of bounds index because that should never happen due to the structure of picking a word to decrypt and then checking if its valid. I've spent way too long on this.
+
+3)
+All methods should satisfy big-O requirements. CrackHelpher() itself may be horribly inefficient though.
